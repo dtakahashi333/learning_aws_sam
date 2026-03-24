@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17.9-trixie
+    # platform: linux/arm64/v8 # forces ARM64
+    platform: linux/x86_64 # forces x86_64 even on ARM host
+    container_name: sam-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: sam_chatbot
+      POSTGRES_USER: sam_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+
+volumes:
+  pgdata:

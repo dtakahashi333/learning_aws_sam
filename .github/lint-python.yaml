@@ -1,0 +1,18 @@
+# GitHub Actions example
+name: Lint Python
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - run: pip install flake8 black isort mypy
+      - run: flake8 hello_world/.
+      - run: black --check hello_world/.
+      - run: isort --check-only hello_world/.
+      - run: mypy hello_world/.

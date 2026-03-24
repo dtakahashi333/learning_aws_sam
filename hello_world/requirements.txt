@@ -1,0 +1,11 @@
+# dependencies
+requests
+psycopg2-binary
+openai
+dashscope
+# dev dependencies
+flake8
+pylint
+black
+isort
+mypy

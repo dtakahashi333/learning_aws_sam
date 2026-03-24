@@ -1,0 +1,55 @@
+# Base image
+FROM debian:trixie-slim
+
+# Install PostgreSQL
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y postgresql postgresql-contrib && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user
+RUN useradd -m -d /home/postgresuser -s /bin/bash postgresuser
+
+# Give the non-root user permissions on PGDATA
+RUN mkdir -p $PGDATA && chown -R postgresuser:postgresuser $PGDATA
+
+# Copy initialization scripts (optional)
+COPY init-db.sql /docker-entrypoint-initdb.d/
+RUN chown postgresuser:postgresuser /docker-entrypoint-initdb.d/init-db.sql
+
+# Switch to non-root user
+USER postgresuser
+
+# Expose PostgreSQL port
+EXPOSE 5432
+
+# Use default PostgreSQL entrypoint
+ENTRYPOINT ["postgres"]
+
+# Default command
+CMD ["-D", "/var/lib/postgresql/data"]
+
+# # 2️⃣ Key points
+
+# 1. **Create a user:**
+
+# ```dockerfile
+# RUN useradd -m -d /home/postgresuser -s /bin/bash postgresuser
+# ```
+
+# 2. **Set ownership for PostgreSQL directories:**
+
+# ```dockerfile
+# RUN mkdir -p $PGDATA && chown -R postgresuser:postgresuser $PGDATA
+# ```
+
+# 3. **Switch user:**
+
+# ```dockerfile
+# USER postgresuser
+# ```
+
+# * From this point, all commands in the container run as `postgresuser`, not root.
+
+# 4. **Environment variables** and initialization scripts are still accessible to the non-root user because you set permissions correctly.
+
+# ---
