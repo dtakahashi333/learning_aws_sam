@@ -1,6 +1,7 @@
 # dependencies
 requests
 psycopg2-binary
+types-psycopg2
 openai
 dashscope
 # dev dependencies

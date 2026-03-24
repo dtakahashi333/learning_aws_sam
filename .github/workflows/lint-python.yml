@@ -8,11 +8,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
-      - run: pip install flake8 black isort mypy
-      - run: flake8 hello_world/.
-      - run: black --check hello_world/.
-      - run: isort --check-only hello_world/.
-      - run: mypy hello_world/.
+          python-version: "3.13"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r hello_world/requirements.txt
+      - name: Run linters
+        run: |
+          flake8 hello_world/.
+          black --check hello_world/.
+          isort --check-only hello_world/.
+          mypy hello_world/.
