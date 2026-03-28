@@ -64,13 +64,22 @@ Resources:
       Runtime: python3.13
       Architectures:
         - x86_64
-      Timeout: 60 # ⬅️ timeout in seconds
+      Timeout: 300 # ⬅️ timeout in seconds
       Events:
         ChatApi:
           Type: Api
           Properties:
             Path: /chat
             Method: post
+      Environment:
+        Variables:
+          PG_HOST: host.docker.internal # works for SAM local Docker
+          PG_PORT: 5432
+          PG_USER: dummy_user
+          PG_PASSWORD: dummy_password
+          PG_DB: dummy_db
+          CHAT_API_TYPE: dummy_api_type
+          DASHSCOPE_API_KEY: dummy_api_key
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
