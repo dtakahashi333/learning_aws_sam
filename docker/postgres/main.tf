@@ -1,7 +1,9 @@
 terraform {
+  required_version = ">= 1.14.7, < 2.0.0"
+
   required_providers {
     docker = {
-      source = "kreuzwerker/docker"
+      source  = "kreuzwerker/docker"
       version = "~> 3.0"
     }
   }
@@ -10,7 +12,9 @@ terraform {
 provider "docker" {}
 
 variable "db_password" {
-  sensitive = true
+  type        = string
+  sensitive   = true
+  description = "Password for the PostgreSQL database"
 }
 
 # Pull image with platform constraint
