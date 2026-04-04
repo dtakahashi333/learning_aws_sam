@@ -1,5 +1,5 @@
 # GitHub Actions example
-name: Lint Python
+name: Python Lint
 
 on: [push, pull_request]
 
