@@ -33,7 +33,7 @@ jobs:
         run: terraform -chdir=docker/postgres validate
 
       - name: Terraform Plan (PostgreSQL)
-        run: terraform -chdir=docker/postgres plan
+        run: terraform -chdir=docker/postgres plan -var="db_password=${{ secrets.DB_PASSWORD }}"
 
       # Qdrant folder
       - name: Terraform Format Check (Qdrant)
