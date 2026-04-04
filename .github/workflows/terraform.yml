@@ -4,21 +4,32 @@ on:
   push:
     branches:
       - main
+    paths:
+      - docker/**
   pull_request:
     branches:
       - main
+    paths:
+      - docker/**
 
 jobs:
   terraform:
     name: Terraform Lint & Validate
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
 
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.14.7
 
@@ -49,9 +60,9 @@ jobs:
         run: terraform -chdir=docker/qdrant plan
 
       - name: TFLint
-        uses: terraform-linters/setup-tflint@v1
+        uses: terraform-linters/setup-tflint@v6
         with:
-          version: v0.55.0
+          tflint_version: v0.61.0
 
       # Postgres folder
       - name: TFLint (Postgres)

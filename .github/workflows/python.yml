@@ -1,15 +1,25 @@
 # GitHub Actions example
 name: Python Lint
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - hello_world/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - hello_world/**
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Install dependencies
