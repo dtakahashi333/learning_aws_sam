@@ -9,6 +9,11 @@ Description: >
 Globals:
   Function:
     Timeout: 3
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'Content-Type,X-Session-Id'"
+      AllowOrigin: "'*'"    # 👈 use * for development, restrict in production
 
 Resources:
   HelloWorldFunction:
