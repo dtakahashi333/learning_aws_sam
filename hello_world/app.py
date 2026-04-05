@@ -180,6 +180,19 @@ async def chatbot_handler_async(event, context):
         asyncpg.PostgresError: If a database operation fails.
         aiohttp.ClientError: If the LLM API request fails.
     """
+    # 👇 handle preflight request
+    if event["httpMethod"] == "OPTIONS":
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST,OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type,X-Session-Id",
+                "Access-Control-Expose-Headers": "X-Session-Id",
+            },
+            "body": "",
+        }
+
     _ = context
 
     pool = await get_db_pool()
@@ -217,8 +230,14 @@ async def chatbot_handler_async(event, context):
 
         return {
             "statusCode": 200,
-            "headers": {"X-Session-Id": session_id},
-            "body": json.dumps(session_data),
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",  # 👈 CORS
+                "Access-Control-Allow-Headers": "Content-Type,X-Session-Id",  # 👈 CORS
+                "Access-Control-Expose-Headers": "X-Session-Id",  # 👈 expose custom header to browser
+                "X-Session-Id": session_id,  # 👈 your custom header
+            },
+            "body": json.dumps({"reply": response}),
         }
 
     return {
