@@ -155,7 +155,7 @@ async def chatbot_handler_async(event, context):
     AWS Lambda handler for managing a chat session with a language model.
 
     This asynchronous function:
-    - Retrieves the session ID from request headers (x-session-id)
+    - Retrieves the session ID from request headers (X-Session-Id)
     - Fetches or creates a session in the database
     - Appends the user's message to the session
     - Sends the message history to an LLM to generate a response
@@ -164,7 +164,7 @@ async def chatbot_handler_async(event, context):
 
     Args:
         event (dict): The Lambda event payload, expected to contain:
-            - "headers": dict containing "x-session-id" (optional)
+            - "headers": dict containing "X-Session-Id" (optional)
             - "body": JSON string or dict containing "message"
         context (LambdaContext): Runtime information provided by AWS Lambda
             (unused in this handler).
@@ -172,7 +172,7 @@ async def chatbot_handler_async(event, context):
     Returns:
         dict: HTTP-style response with:
             - statusCode (int): 200 for success, 400 for missing message
-            - headers (dict): contains "x-session-id"
+            - headers (dict): contains "X-Session-Id"
             - body (str): JSON-encoded session data (on success)
 
     Raises:
@@ -185,7 +185,7 @@ async def chatbot_handler_async(event, context):
     pool = await get_db_pool()
 
     headers = event.get("headers") or {}
-    session_id = headers.get("x-session-id")
+    session_id = headers.get("X-Session-Id")
 
     try:
         session_id, session_data = await get_session_data(pool, session_id)
@@ -217,13 +217,13 @@ async def chatbot_handler_async(event, context):
 
         return {
             "statusCode": 200,
-            "headers": {"x-session-id": session_id},
+            "headers": {"X-Session-Id": session_id},
             "body": json.dumps(session_data),
         }
 
     return {
         "statusCode": 400,
-        "headers": {"x-session-id": session_id},
+        "headers": {"X-Session-Id": session_id},
     }
 
 
@@ -344,7 +344,7 @@ async def get_session_data(pool, session_id=None, user_id=None):
         if not row:
             raise ValueError(f"Session with ID {session_id} not found")
 
-        return session_id, row["data"]
+        return session_id, json.loads(row["data"])
 
 
 async def save_session_data(pool, session_id, session_data, expires_at=None):
