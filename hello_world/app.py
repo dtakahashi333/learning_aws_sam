@@ -573,3 +573,69 @@ response = dashscope.Generation.call(
     )
 print(response)
 """
+
+
+def db_handler(event, context):
+    """
+    Synchronous AWS Lambda entry point for the async db handler.
+
+    This function serves as a wrapper that executes the asynchronous
+    `db_handler_async` using `asyncio.run`, enabling compatibility
+    with AWS Lambda's synchronous invocation model.
+
+    Args:
+        event (dict): The Lambda event payload passed to the async handler.
+        context (LambdaContext): Runtime information provided by AWS Lambda.
+
+    Returns:
+        dict: HTTP-style response returned by `db_handler_async`.
+
+    Raises:
+        Exception: Propagates any exception raised by the async handler.
+    """
+    return asyncio.run(db_handler_async(event, context))
+
+
+async def db_handler_async(event, context):
+    # 👇 handle preflight request
+    if event["httpMethod"] == "OPTIONS":
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST,OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
+            "body": "",
+        }
+
+    _ = context
+
+    pool = await get_db_pool()
+
+    body = event.get("body", "{}")
+    if isinstance(body, str):
+        try:
+            body = json.loads(body)
+        except json.JSONDecodeError:
+            body = {}
+
+    session_id = body.get("session_id", "")
+
+    try:
+        session_id, session_data = await get_session_data(pool, session_id)
+    except ValueError:
+        return {
+            "statusCode": 404,
+            "body": json.dumps({"error": "Session not found"}),
+        }
+
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",  # 👈 CORS
+            "Access-Control-Allow-Headers": "Content-Type,X-Session-Id",  # 👈 CORS
+        },
+        "body": json.dumps(session_data),
+    }

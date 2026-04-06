@@ -9,4 +9,8 @@ sam local start-api --docker-network host
 PG_HOST=<pg-host> PG_PORT=<pg-port> PG_USER=<pg-user> PG_PASSWORD=<pg-password> PG_DB=<pg-db> sam local start-api --host 0.0.0.0 --port 3000
 # Read environment variables from env.json when starting the Lambda handlers:
 sam local start-api --env-vars env.json --host 0.0.0.0 --port 3000
+# --debug-port 5858 (or -d 5858) opens a debug port
+sam local start-api --env-vars env.json --host 0.0.0.0 --port 3000 --debug-port 5858
+# Use --debug-function with API mode. Only MyFunction listens on 5858
+sam local start-api --host 0.0.0.0 --port 3000 --debug-port 5858 --debug-function MyFunction
 ```

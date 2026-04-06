@@ -9,11 +9,11 @@ Description: >
 Globals:
   Function:
     Timeout: 3
-  Api:
-    Cors:
-      AllowMethods: "'GET,POST,OPTIONS'"
-      AllowHeaders: "'Content-Type,X-Session-Id'"
-      AllowOrigin: "'*'"    # 👈 use * for development, restrict in production
+  # Api:
+  #   Cors:
+  #     AllowMethods: "'GET,POST,OPTIONS'"
+  #     AllowHeaders: "'Content-Type,X-Session-Id'"
+  #     AllowOrigin: "'*'" # 👈 use * for development, restrict in production
 
 Resources:
   HelloWorldFunction:
@@ -76,6 +76,11 @@ Resources:
           Properties:
             Path: /chat
             Method: post
+        ChatApiOptions:
+          Type: Api
+          Properties:
+            Path: /chat
+            Method: options
       Environment:
         Variables:
           PG_HOST: host.docker.internal # works for SAM local Docker
@@ -85,6 +90,33 @@ Resources:
           PG_DB: dummy_db
           CHAT_API_TYPE: dummy_api_type
           DASHSCOPE_API_KEY: dummy_api_key
+
+  DbFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.db_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Events:
+        DbApi:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /db
+            Method: post
+        DbApiOptions:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /db
+            Method: options
+      Environment:
+        Variables:
+          PG_HOST: host.docker.internal # works for SAM local Docker
+          PG_PORT: 5432
+          PG_USER: dummy_user
+          PG_PASSWORD: dummy_password
+          PG_DB: dummy_db
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
