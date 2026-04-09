@@ -91,25 +91,20 @@ Resources:
           CHAT_API_TYPE: dummy_api_type
           DASHSCOPE_API_KEY: dummy_api_key
 
-  DbFunction:
+  HistoryFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: hello_world/
-      Handler: app.db_handler
+      Handler: app.history_handler
       Runtime: python3.13
       Architectures:
         - x86_64
       Events:
-        DbApi:
+        HistoryApi:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /db
-            Method: post
-        DbApiOptions:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            Path: /db
-            Method: options
+            Path: /history/{session_id}
+            Method: get
       Environment:
         Variables:
           PG_HOST: host.docker.internal # works for SAM local Docker

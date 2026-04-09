@@ -575,12 +575,12 @@ print(response)
 """
 
 
-def db_handler(event, context):
+def history_handler(event, context):
     """
-    Synchronous AWS Lambda entry point for the async db handler.
+    Synchronous AWS Lambda entry point for the async history handler.
 
     This function serves as a wrapper that executes the asynchronous
-    `db_handler_async` using `asyncio.run`, enabling compatibility
+    `history_handler_async` using `asyncio.run`, enabling compatibility
     with AWS Lambda's synchronous invocation model.
 
     Args:
@@ -588,39 +588,23 @@ def db_handler(event, context):
         context (LambdaContext): Runtime information provided by AWS Lambda.
 
     Returns:
-        dict: HTTP-style response returned by `db_handler_async`.
+        dict: HTTP-style response returned by `history_handler_async`.
 
     Raises:
         Exception: Propagates any exception raised by the async handler.
     """
-    return asyncio.run(db_handler_async(event, context))
+    return asyncio.run(history_handler_async(event, context))
 
 
-async def db_handler_async(event, context):
-    # 👇 handle preflight request
-    if event["httpMethod"] == "OPTIONS":
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST,OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type",
-            },
-            "body": "",
-        }
-
+async def history_handler_async(event, context):
     _ = context
 
+    path = event["path"]
+    print(path)
+
+    session_id = path.split("/history/")[1]
+
     pool = await get_db_pool()
-
-    body = event.get("body", "{}")
-    if isinstance(body, str):
-        try:
-            body = json.loads(body)
-        except json.JSONDecodeError:
-            body = {}
-
-    session_id = body.get("session_id", "")
 
     try:
         session_id, session_data = await get_session_data(pool, session_id)
@@ -636,6 +620,7 @@ async def db_handler_async(event, context):
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",  # 👈 CORS
             "Access-Control-Allow-Headers": "Content-Type,X-Session-Id",  # 👈 CORS
+            "Access-Control-Expose-Headers": "X-Session-Id",
         },
         "body": json.dumps(session_data),
     }
