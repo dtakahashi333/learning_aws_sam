@@ -12,7 +12,7 @@ import asyncio
 import json
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import aiohttp
 import asyncpg  # type: ignore[import]
@@ -218,13 +218,25 @@ async def chatbot_handler_async(event, context):
     message = body.get("message", "")
 
     if message:
-        session_data["messages"].append({"role": "user", "content": message})
+        session_data["messages"].append(
+            {
+                "role": "user",
+                "content": message,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
         response = await generate_llm_response(
             session_data, api_type=os.getenv("CHAT_API_TYPE", "openapi")
         )
 
-        session_data["messages"].append({"role": "assistant", "content": response})
+        session_data["messages"].append(
+            {
+                "role": "assistant",
+                "content": response,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
         await save_session_data(pool, session_id, session_data)
 
@@ -333,7 +345,7 @@ async def get_session_data(pool, session_id=None, user_id=None):
         if not session_id:
             # Create a new session
             session_id = str(uuid.uuid4())
-            expires_at = datetime.utcnow() + timedelta(
+            expires_at = datetime.now(timezone.utc) + timedelta(
                 hours=1
             )  # naive datetime for TIMESTAMP
             initial_data = {"messages": []}
@@ -415,6 +427,25 @@ async def save_session_data(pool, session_id, session_data, expires_at=None):
         if result == "UPDATE 0":
             raise ValueError(f"Session with ID {session_id} not found")
 
+        messages = session_data["messages"]
+        print(f"message length: {len(messages)}")
+        if len(messages) == 1:
+            first_message = messages[0]["content"]
+            # 👇 use first message as title, truncated to 40 chars
+            title = first_message[:40] + ("..." if len(first_message) > 40 else "")
+            result = await conn.execute(
+                """
+                UPDATE sessions
+                SET title = $1
+                WHERE session_id = $2
+                """,
+                title,
+                session_id,
+            )
+
+        if result == "UPDATE 0":
+            raise ValueError(f"Session with ID {session_id} not found")
+
 
 async def generate_llm_response(session_data, api_type="openai"):
     """
@@ -443,16 +474,19 @@ async def generate_llm_response(session_data, api_type="openai"):
     Raises:
         ValueError: If an unsupported api_type is provided.
     """
+    filtered = [
+        {"role": m["role"], "content": m["content"]} for m in session_data["messages"]
+    ]
     messages = [
         {"role": "system", "content": "You are a helpful assistant."},
-        *session_data["messages"],
+        *filtered,
     ]
     print(f"messages: {json.dumps(messages)}")
-    if api_type == "openai":
-        return await call_openai(messages)
-    elif api_type == "dashscope":
-        return await call_dashscope(messages)
-    raise ValueError(f"Unsupported api_type: {api_type}")
+    # if api_type == "openai":
+    #     return await call_openai(messages)
+    # elif api_type == "dashscope":
+    #     return await call_dashscope(messages)
+    # raise ValueError(f"Unsupported api_type: {api_type}")
 
 
 async def call_openai(messages):
@@ -624,3 +658,28 @@ async def history_handler_async(event, context):
         },
         "body": json.dumps(session_data),
     }
+
+
+def conversation_handler(event, context):
+    """
+    Synchronous AWS Lambda entry point for the async conversation handler.
+
+    This function serves as a wrapper that executes the asynchronous
+    `conversation_handler_async` using `asyncio.run`, enabling compatibility
+    with AWS Lambda's synchronous invocation model.
+
+    Args:
+        event (dict): The Lambda event payload passed to the async handler.
+        context (LambdaContext): Runtime information provided by AWS Lambda.
+
+    Returns:
+        dict: HTTP-style response returned by `conversation_handler_async`.
+
+    Raises:
+        Exception: Propagates any exception raised by the async handler.
+    """
+    return asyncio.run(history_handler_async(event, context))
+
+
+async def conversation_handler_async(event, context):
+    pass
