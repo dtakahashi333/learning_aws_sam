@@ -481,12 +481,12 @@ async def generate_llm_response(session_data, api_type="openai"):
         {"role": "system", "content": "You are a helpful assistant."},
         *filtered,
     ]
-    print(f"messages: {json.dumps(messages)}")
-    # if api_type == "openai":
-    #     return await call_openai(messages)
-    # elif api_type == "dashscope":
-    #     return await call_dashscope(messages)
-    # raise ValueError(f"Unsupported api_type: {api_type}")
+
+    if api_type == "openai":
+        return await call_openai(messages)
+    elif api_type == "dashscope":
+        return await call_dashscope(messages)
+    raise ValueError(f"Unsupported api_type: {api_type}")
 
 
 async def call_openai(messages):
