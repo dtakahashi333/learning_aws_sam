@@ -660,12 +660,12 @@ async def history_handler_async(event, context):
     }
 
 
-def conversation_handler(event, context):
+def conversations_handler(event, context):
     """
-    Synchronous AWS Lambda entry point for the async conversation handler.
+    Synchronous AWS Lambda entry point for the async conversations handler.
 
     This function serves as a wrapper that executes the asynchronous
-    `conversation_handler_async` using `asyncio.run`, enabling compatibility
+    `conversations_handler_async` using `asyncio.run`, enabling compatibility
     with AWS Lambda's synchronous invocation model.
 
     Args:
@@ -673,13 +673,47 @@ def conversation_handler(event, context):
         context (LambdaContext): Runtime information provided by AWS Lambda.
 
     Returns:
-        dict: HTTP-style response returned by `conversation_handler_async`.
+        dict: HTTP-style response returned by `conversations_handler_async`.
 
     Raises:
         Exception: Propagates any exception raised by the async handler.
     """
-    return asyncio.run(history_handler_async(event, context))
+    return asyncio.run(conversations_handler_async(event, context))
 
 
-async def conversation_handler_async(event, context):
-    pass
+async def conversations_handler_async(event, context):
+    _ = event
+    _ = context
+
+    pool = await get_db_pool()
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT session_id, title, created_at
+            FROM sessions
+            ORDER BY created_at DESC
+            LIMIT 20
+            """,
+        )
+
+        conversations = [
+            {
+                **dict(row),
+                "created_at": (
+                    row["created_at"].isoformat() if row["created_at"] else None
+                ),
+            }
+            for row in rows
+        ]
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",  # 👈 CORS
+                "Access-Control-Allow-Headers": "Content-Type,X-Session-Id",  # 👈 CORS
+                "Access-Control-Expose-Headers": "X-Session-Id",
+            },
+            "body": json.dumps({"conversations": conversations}),
+        }

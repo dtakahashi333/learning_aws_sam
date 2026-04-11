@@ -113,6 +113,28 @@ Resources:
           PG_PASSWORD: dummy_password
           PG_DB: dummy_db
 
+  ConversationsFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.conversations_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Events:
+        HistoryApi:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /conversations
+            Method: get
+      Environment:
+        Variables:
+          PG_HOST: host.docker.internal # works for SAM local Docker
+          PG_PORT: 5432
+          PG_USER: dummy_user
+          PG_PASSWORD: dummy_password
+          PG_DB: dummy_db
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
