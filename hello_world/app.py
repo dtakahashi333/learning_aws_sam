@@ -631,6 +631,33 @@ def history_handler(event, context):
 
 
 async def history_handler_async(event, context):
+    """
+    Retrieve the message history for a specific conversation session.
+
+    This asynchronous handler extracts a session ID from the request path,
+    fetches the corresponding session data from the database, and returns
+    the conversation history as a JSON response. If the session does not
+    exist, a 404 response is returned.
+
+    Args:
+        event (dict): The event payload containing request details, including
+            the path with the session identifier.
+        context (object): The runtime context provided by the execution
+            environment (unused).
+
+    Returns:
+        dict: An HTTP response containing:
+            - statusCode (int): HTTP status code (200 on success, 404 if not found).
+            - headers (dict): Response headers including CORS configuration
+              (present on success responses).
+            - body (str): JSON-encoded string containing the session data or
+              an error message.
+
+    Raises:
+        asyncpg.PostgresError: If a database operation fails.
+        KeyError: If the expected path is missing from the event.
+        Exception: For any unexpected errors during processing or serialization.
+    """
     _ = context
 
     path = event["path"]
@@ -682,6 +709,29 @@ def conversations_handler(event, context):
 
 
 async def conversations_handler_async(event, context):
+    """
+    Retrieve the most recent conversations from the database.
+
+    This asynchronous handler queries the PostgreSQL database for the latest
+    conversation sessions, returning up to 20 records ordered by creation time
+    in descending order. Each conversation includes its session ID, title, and
+    ISO-formatted creation timestamp. The response is formatted as a JSON object
+    and includes CORS headers for cross-origin access.
+
+    Args:
+        event (dict): The event payload triggering the handler (unused).
+        context (object): The runtime context provided by the execution environment (unused).
+
+    Returns:
+        dict: An HTTP response containing:
+            - statusCode (int): HTTP status code (200 on success).
+            - headers (dict): Response headers including CORS configuration.
+            - body (str): JSON-encoded string with a list of conversations.
+
+    Raises:
+        asyncpg.PostgresError: If the database query fails.
+        Exception: For any unexpected errors during processing or serialization.
+    """
     _ = event
     _ = context
 
